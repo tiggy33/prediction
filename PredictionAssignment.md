@@ -8,9 +8,10 @@ output: html
 The goal of this project is to predict the manner in which those did the exercise.
 The data for this project come from this source: http://groupware.les.inf.puc-rio.br/har.
 
-## Pre-processing Data
+## Preprocessing Data
 1. Delete columns with empty values
 2. Delete the first 7 columns which not related to the prediction: X, user_name, raw_timestamp_part_1, raw_timestamp_part_2, cvtd_timestamp, new_window, num_window.
+
 
 ```r
 library(caret)
@@ -22,7 +23,9 @@ training <- training[,-nearZeroVar(training)]
 training <- training[,-c(1,2,3,4,5,6,7)]
 ```
 
-Get rid of NA values using KnnImpute method to impute those values.
+
+ThereGet rid of NA values using KnnImpute method to impute those values.
+
 
 ```r
 inTrain <- createDataPartition(y=training$classe, p=0.75, list=FALSE)
@@ -34,7 +37,9 @@ clean_data <- predict(preObj,training[,-length(training)])
 ```
 
 ## Prediction
+
 Knn method will be used to build the model.  The accuracy is 0.9748. 
+
 
 ```r
 modelFit <- train(training$classe ~.,data=clean_data, method="knn")
@@ -78,6 +83,7 @@ confusionMatrix(testing$classe, predict(modelFit,test))
 
 
 Finally, predict the result with the testing data:
+
 
 ```r
 testing <- read.csv("pml-testing.csv", stringsAsFactors=FALSE)
