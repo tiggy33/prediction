@@ -1,0 +1,85 @@
+<p>The goal of this project is to predict the manner in which those did the exercise.
+The data for this project come from this source: <a href="http://groupware.les.inf.puc-rio.br/har">http://groupware.les.inf.puc-rio.br/har</a>.</p>
+
+<h2>Pre-processing Data</h2>
+
+<ol>
+<li>Delete columns with empty values</li>
+<li>Delete the first 7 columns which not related to the prediction: X, user_name, raw_timestamp_part_1, raw_timestamp_part_2, cvtd_timestamp, new_window, num_window.</li>
+</ol>
+
+<pre><code class="r">library(caret)
+set.seed(12463)
+
+training &lt;- read.csv(&quot;pml-training.csv&quot;, stringsAsFactors=FALSE)
+training$classe &lt;- as.factor(training$classe)
+training &lt;- training[,-nearZeroVar(training)]
+training &lt;- training[,-c(1,2,3,4,5,6,7)]
+</code></pre>
+
+<p>Get rid of NA values using KnnImpute method to impute those values.</p>
+
+<pre><code class="r">inTrain &lt;- createDataPartition(y=training$classe, p=0.75, list=FALSE)
+training &lt;- training[inTrain,]
+testing &lt;- training[-inTrain,]
+
+preObj &lt;- preProcess(training[,-length(training)],method=c(&quot;center&quot;, &quot;scale&quot;, &quot;knnImpute&quot;, &quot;pca&quot;), thresh=0.9)
+clean_data &lt;- predict(preObj,training[,-length(training)])
+</code></pre>
+
+<h2>Prediction</h2>
+
+<p>Knn method will be used to build the model.  The accuracy is 0.9748. </p>
+
+<pre><code class="r">modelFit &lt;- train(training$classe ~.,data=clean_data, method=&quot;knn&quot;)
+test &lt;- predict(preObj, testing[,-length(testing)])
+confusionMatrix(testing$classe, predict(modelFit,test))
+</code></pre>
+
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 1018    3    9    2    0
+##          B   15  709   12    1    0
+##          C    6   10  607    7    2
+##          D    2    1   15  582    1
+##          E    0    4    2    0  678
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.975           
+##                  95% CI : (0.9695, 0.9798)
+##     No Information Rate : 0.2824          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.9684          
+##  Mcnemar&#39;s Test P-Value : NA              
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            0.9779   0.9752   0.9411   0.9831   0.9956
+## Specificity            0.9947   0.9905   0.9918   0.9939   0.9980
+## Pos Pred Value         0.9864   0.9620   0.9604   0.9684   0.9912
+## Neg Pred Value         0.9913   0.9939   0.9876   0.9968   0.9990
+## Prevalence             0.2824   0.1972   0.1750   0.1606   0.1848
+## Detection Rate         0.2762   0.1923   0.1647   0.1579   0.1839
+## Detection Prevalence   0.2800   0.1999   0.1715   0.1630   0.1856
+## Balanced Accuracy      0.9863   0.9829   0.9664   0.9885   0.9968
+</code></pre>
+
+<p>Finally, predict the result with the testing data:</p>
+
+<pre><code class="r">testing &lt;- read.csv(&quot;pml-testing.csv&quot;, stringsAsFactors=FALSE)
+testing &lt;- testing[,names(testing) %in% names(training)]
+
+test &lt;- predict(preObj, testing)
+result &lt;- predict(modelFit, test)
+result
+</code></pre>
+
+<pre><code>##  [1] B A A A A E D B A A B C B A E E A B B B
+## Levels: A B C D E
+</code></pre>
+
